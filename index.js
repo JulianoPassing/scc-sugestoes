@@ -23,7 +23,7 @@ client.on('messageCreate', async (message) => {
 
   // Cria o embed da sugestão
   const embed = new EmbedBuilder()
-    .setColor('#FFD700') // Cor dourada para destacar
+    .setColor('#0099FF') // Cor azul para o padrão
     .setAuthor({
       name: `${message.author.username} - ${message.author.id}`,
       iconURL: message.author.displayAvatarURL({ dynamic: true, size: 64 })
@@ -38,19 +38,18 @@ client.on('messageCreate', async (message) => {
       text: 'Sistema de Sugestões • SCC', 
       iconURL: message.guild.iconURL({ dynamic: true }) 
     })
-    .setTimestamp()
-    .setThumbnail(message.guild.iconURL({ dynamic: true, size: 128 }));
+    .setTimestamp();
 
   // Cria os botões de votação
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('vote_yes')
-      .setLabel('👍 Concordo (0)')
+      .setLabel('👍 (0) - 0%')
       .setStyle(ButtonStyle.Success)
       .setEmoji('✅'),
     new ButtonBuilder()
       .setCustomId('vote_no')
-      .setLabel('👎 Discordo (0)')
+      .setLabel('👎 (0) - 0%')
       .setStyle(ButtonStyle.Danger)
       .setEmoji('❌')
   );
@@ -89,8 +88,8 @@ client.on('interactionCreate', async (interaction) => {
   const porcentagemSim = totalVotos > 0 ? Math.round((voto.yes.size / totalVotos) * 100) : 0;
   const porcentagemNao = totalVotos > 0 ? Math.round((voto.no.size / totalVotos) * 100) : 0;
   
-  row.components[0].setLabel(`👍 Concordo (${voto.yes.size}) - ${porcentagemSim}%`);
-  row.components[1].setLabel(`👎 Discordo (${voto.no.size}) - ${porcentagemNao}%`);
+  row.components[0].setLabel(`👍 (${voto.yes.size}) - ${porcentagemSim}%`);
+  row.components[1].setLabel(`👎 (${voto.no.size}) - ${porcentagemNao}%`);
 
   await interaction.update({ components: [row] });
 });
