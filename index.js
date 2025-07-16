@@ -11,6 +11,7 @@ const client = new Client({
 });
 
 const SUGGESTION_CHANNEL_ID = '1395111676075966716';
+const VOTES_CHANNEL_ID = '1395115693598576683';
 
 client.on('messageCreate', async (message) => {
   // Ignora mensagens do bot e fora do canal de sugestões
@@ -100,34 +101,58 @@ client.on('interactionCreate', async (interaction) => {
     row.components[0].setLabel(`👍 (${voto.yes.size}) - ${porcentagemSim}%`);
     row.components[1].setLabel(`👎 (${voto.no.size}) - ${porcentagemNao}%`);
 
-    // Atualiza o embed com a lista de votantes
-    const embed = EmbedBuilder.from(message.embeds[0]);
-    
-    // Remove campos antigos de votantes se existirem
-    embed.data.fields = embed.data.fields.filter(field => 
-      !field.name.includes('Votaram Sim') && !field.name.includes('Votaram Não')
-    );
-    
-    // Adiciona campos com os votantes
-    if (voto.yes.size > 0) {
-      const votantesSim = Array.from(voto.yes).map(id => `<@${id}>`).join(', ');
-      embed.addFields({ 
-        name: `✅ Votaram Sim (${voto.yes.size})`, 
-        value: votantesSim, 
-        inline: false 
-      });
-    }
-    
-    if (voto.no.size > 0) {
-      const votantesNao = Array.from(voto.no).map(id => `<@${id}>`).join(', ');
-      embed.addFields({ 
-        name: `❌ Votaram Não (${voto.no.size})`, 
-        value: votantesNao, 
-        inline: false 
-      });
-    }
+    // Atualiza apenas os botões no canal de sugestões (sem lista de votantes)
+    await interaction.update({ components: [row] });
 
-    await interaction.update({ embeds: [embed], components: [row] });
+    // Envia/atualiza a lista de votantes no canal separado
+    const votesChannel = interaction.guild.channels.cache.get(VOTES_CHANNEL_ID);
+    if (votesChannel) {
+      // Procura por mensagem existente de votos para esta sugestão
+      const existingMessages = await votesChannel.messages.fetch({ limit: 50 });
+      const existingVoteMessage = existingMessages.find(msg => 
+        msg.content.includes(`Sugestão ID: ${message.id}`)
+      );
+
+      // Cria o embed com a lista de votantes
+      const votesEmbed = new EmbedBuilder()
+        .setColor('#0099FF')
+        .setTitle('📊 Votação da Sugestão')
+        .setDescription(`**Sugestão:** ${message.embeds[0].description}`)
+        .addFields(
+          { name: '👤 Autor Original', value: message.embeds[0].fields.find(f => f.name.includes('Autor'))?.value || 'N/A', inline: true },
+          { name: '📅 Data', value: message.embeds[0].fields.find(f => f.name.includes('Data'))?.value || 'N/A', inline: true },
+          { name: '📈 Total de Votos', value: `${totalVotos}`, inline: true }
+        )
+        .setFooter({ text: `Sugestão ID: ${message.id}` })
+        .setTimestamp();
+
+      // Adiciona campos com os votantes
+      if (voto.yes.size > 0) {
+        const votantesSim = Array.from(voto.yes).map(id => `<@${id}>`).join(', ');
+        votesEmbed.addFields({ 
+          name: `✅ Votaram Sim (${voto.yes.size}) - ${porcentagemSim}%`, 
+          value: votantesSim, 
+          inline: false 
+        });
+      }
+      
+      if (voto.no.size > 0) {
+        const votantesNao = Array.from(voto.no).map(id => `<@${id}>`).join(', ');
+        votesEmbed.addFields({ 
+          name: `❌ Votaram Não (${voto.no.size}) - ${porcentagemNao}%`, 
+          value: votantesNao, 
+          inline: false 
+        });
+      }
+
+      if (existingVoteMessage) {
+        // Atualiza mensagem existente
+        await existingVoteMessage.edit({ embeds: [votesEmbed] });
+      } else {
+        // Cria nova mensagem
+        await votesChannel.send({ embeds: [votesEmbed] });
+      }
+    }
   } catch (error) {
     console.error('Erro ao processar voto:', error);
     await interaction.reply({ content: 'Erro ao processar seu voto. Tente novamente.', ephemeral: true });
