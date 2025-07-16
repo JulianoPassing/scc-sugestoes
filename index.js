@@ -62,6 +62,17 @@ client.on('messageCreate', async (message) => {
     // Inicializa o registro de votos para esta mensagem
     votos.set(sentMessage.id, { yes: new Set(), no: new Set() });
     
+    // Cria automaticamente um tópico para debate
+    try {
+      await sentMessage.startThread({
+        name: `💬 Debate: ${conteudo.substring(0, 50)}${conteudo.length > 50 ? '...' : ''}`,
+        autoArchiveDuration: 60, // 1 hora
+        reason: 'Tópico de debate criado automaticamente para a sugestão'
+      });
+    } catch (threadError) {
+      console.error('Erro ao criar tópico de debate:', threadError);
+    }
+    
   } catch (error) {
     console.error('Erro ao processar sugestão:', error);
   }
