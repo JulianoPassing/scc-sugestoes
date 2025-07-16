@@ -31,7 +31,6 @@ client.on('messageCreate', async (message) => {
     .setTitle('💡 Sugestão')
     .setDescription(`> ${conteudo}`)
     .addFields(
-      { name: '📊 Status', value: 'Aguardando votação', inline: true },
       { name: '👤 Autor', value: `<@${message.author.id}>`, inline: true },
       { name: '📅 Data', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
     )
@@ -85,8 +84,13 @@ client.on('interactionCreate', async (interaction) => {
 
   // Atualiza labels dos botões
   const row = ActionRowBuilder.from(message.components[0]);
-  row.components[0].setLabel(`👍 Concordo (${voto.yes.size})`);
-  row.components[1].setLabel(`👎 Discordo (${voto.no.size})`);
+  const totalVotos = voto.yes.size + voto.no.size;
+  
+  const porcentagemSim = totalVotos > 0 ? Math.round((voto.yes.size / totalVotos) * 100) : 0;
+  const porcentagemNao = totalVotos > 0 ? Math.round((voto.no.size / totalVotos) * 100) : 0;
+  
+  row.components[0].setLabel(`👍 Concordo (${voto.yes.size}) - ${porcentagemSim}%`);
+  row.components[1].setLabel(`👎 Discordo (${voto.no.size}) - ${porcentagemNao}%`);
 
   await interaction.update({ components: [row] });
 });
