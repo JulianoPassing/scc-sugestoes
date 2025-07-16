@@ -91,7 +91,34 @@ client.on('interactionCreate', async (interaction) => {
   row.components[0].setLabel(`👍 (${voto.yes.size}) - ${porcentagemSim}%`);
   row.components[1].setLabel(`👎 (${voto.no.size}) - ${porcentagemNao}%`);
 
-  await interaction.update({ components: [row] });
+  // Atualiza o embed com a lista de votantes
+  const embed = EmbedBuilder.from(message.embeds[0]);
+  
+  // Remove campos antigos de votantes se existirem
+  embed.data.fields = embed.data.fields.filter(field => 
+    !field.name.includes('Votaram Sim') && !field.name.includes('Votaram Não')
+  );
+  
+  // Adiciona campos com os votantes
+  if (voto.yes.size > 0) {
+    const votantesSim = Array.from(voto.yes).map(id => `<@${id}>`).join(', ');
+    embed.addFields({ 
+      name: `✅ Votaram Sim (${voto.yes.size})`, 
+      value: votantesSim, 
+      inline: false 
+    });
+  }
+  
+  if (voto.no.size > 0) {
+    const votantesNao = Array.from(voto.no).map(id => `<@${id}>`).join(', ');
+    embed.addFields({ 
+      name: `❌ Votaram Não (${voto.no.size})`, 
+      value: votantesNao, 
+      inline: false 
+    });
+  }
+
+  await interaction.update({ embeds: [embed], components: [row] });
 });
 
 client.once('ready', () => {
