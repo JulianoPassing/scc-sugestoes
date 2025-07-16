@@ -75,58 +75,63 @@ client.on('interactionCreate', async (interaction) => {
 
   if (!['vote_yes', 'vote_no'].includes(customId)) return;
 
-  // Inicializa votos se necessário
-  if (!votos.has(message.id)) {
-    votos.set(message.id, { yes: new Set(), no: new Set() });
+  try {
+    // Verifica se existe registro de votos para esta mensagem
+    if (!votos.has(message.id)) {
+      votos.set(message.id, { yes: new Set(), no: new Set() });
+    }
+    const voto = votos.get(message.id);
+
+    // Remove voto anterior
+    voto.yes.delete(user.id);
+    voto.no.delete(user.id);
+
+    // Adiciona novo voto
+    if (customId === 'vote_yes') voto.yes.add(user.id);
+    if (customId === 'vote_no') voto.no.add(user.id);
+
+    // Atualiza labels dos botões
+    const row = ActionRowBuilder.from(message.components[0]);
+    const totalVotos = voto.yes.size + voto.no.size;
+    
+    const porcentagemSim = totalVotos > 0 ? Math.round((voto.yes.size / totalVotos) * 100) : 0;
+    const porcentagemNao = totalVotos > 0 ? Math.round((voto.no.size / totalVotos) * 100) : 0;
+    
+    row.components[0].setLabel(`👍 (${voto.yes.size}) - ${porcentagemSim}%`);
+    row.components[1].setLabel(`👎 (${voto.no.size}) - ${porcentagemNao}%`);
+
+    // Atualiza o embed com a lista de votantes
+    const embed = EmbedBuilder.from(message.embeds[0]);
+    
+    // Remove campos antigos de votantes se existirem
+    embed.data.fields = embed.data.fields.filter(field => 
+      !field.name.includes('Votaram Sim') && !field.name.includes('Votaram Não')
+    );
+    
+    // Adiciona campos com os votantes
+    if (voto.yes.size > 0) {
+      const votantesSim = Array.from(voto.yes).map(id => `<@${id}>`).join(', ');
+      embed.addFields({ 
+        name: `✅ Votaram Sim (${voto.yes.size})`, 
+        value: votantesSim, 
+        inline: false 
+      });
+    }
+    
+    if (voto.no.size > 0) {
+      const votantesNao = Array.from(voto.no).map(id => `<@${id}>`).join(', ');
+      embed.addFields({ 
+        name: `❌ Votaram Não (${voto.no.size})`, 
+        value: votantesNao, 
+        inline: false 
+      });
+    }
+
+    await interaction.update({ embeds: [embed], components: [row] });
+  } catch (error) {
+    console.error('Erro ao processar voto:', error);
+    await interaction.reply({ content: 'Erro ao processar seu voto. Tente novamente.', ephemeral: true });
   }
-  const voto = votos.get(message.id);
-
-  // Remove voto anterior
-  voto.yes.delete(user.id);
-  voto.no.delete(user.id);
-
-  // Adiciona novo voto
-  if (customId === 'vote_yes') voto.yes.add(user.id);
-  if (customId === 'vote_no') voto.no.add(user.id);
-
-  // Atualiza labels dos botões
-  const row = ActionRowBuilder.from(message.components[0]);
-  const totalVotos = voto.yes.size + voto.no.size;
-  
-  const porcentagemSim = totalVotos > 0 ? Math.round((voto.yes.size / totalVotos) * 100) : 0;
-  const porcentagemNao = totalVotos > 0 ? Math.round((voto.no.size / totalVotos) * 100) : 0;
-  
-  row.components[0].setLabel(`👍 (${voto.yes.size}) - ${porcentagemSim}%`);
-  row.components[1].setLabel(`👎 (${voto.no.size}) - ${porcentagemNao}%`);
-
-  // Atualiza o embed com a lista de votantes
-  const embed = EmbedBuilder.from(message.embeds[0]);
-  
-  // Remove campos antigos de votantes se existirem
-  embed.data.fields = embed.data.fields.filter(field => 
-    !field.name.includes('Votaram Sim') && !field.name.includes('Votaram Não')
-  );
-  
-  // Adiciona campos com os votantes
-  if (voto.yes.size > 0) {
-    const votantesSim = Array.from(voto.yes).map(id => `<@${id}>`).join(', ');
-    embed.addFields({ 
-      name: `✅ Votaram Sim (${voto.yes.size})`, 
-      value: votantesSim, 
-      inline: false 
-    });
-  }
-  
-  if (voto.no.size > 0) {
-    const votantesNao = Array.from(voto.no).map(id => `<@${id}>`).join(', ');
-    embed.addFields({ 
-      name: `❌ Votaram Não (${voto.no.size})`, 
-      value: votantesNao, 
-      inline: false 
-    });
-  }
-
-  await interaction.update({ embeds: [embed], components: [row] });
 });
 
 client.once('ready', () => {
