@@ -80,6 +80,7 @@ client.on('messageCreate', async (message) => {
 
 // Lógica de votação
 const votos = new Map(); // Map<messageId, {yes: Set<userId>, no: Set<userId>}>
+const logsMessages = new Map(); // Map<suggestionId, logMessageId>
 
 client.on('interactionCreate', async (interaction) => {
   if (!interaction.isButton()) return;
@@ -118,11 +119,19 @@ client.on('interactionCreate', async (interaction) => {
     // Envia/atualiza a lista de votantes no canal separado
     const votesChannel = interaction.guild.channels.cache.get(VOTES_CHANNEL_ID);
     if (votesChannel) {
-      // Procura por mensagem existente de votos para esta sugestão
-      const existingMessages = await votesChannel.messages.fetch({ limit: 50 });
-      const existingVoteMessage = existingMessages.find(msg => 
-        msg.content.includes(`Sugestão ID: ${message.id}`)
-      );
+      // Verifica se já existe uma mensagem de log para esta sugestão
+      let logMessageId = logsMessages.get(message.id);
+      let logMessage = null;
+
+      if (logMessageId) {
+        try {
+          logMessage = await votesChannel.messages.fetch(logMessageId);
+        } catch (error) {
+          // Se a mensagem não existe mais, remove do cache
+          logsMessages.delete(message.id);
+          logMessageId = null;
+        }
+      }
 
       // Cria o embed com a lista de votantes
       const votesEmbed = new EmbedBuilder()
@@ -156,12 +165,13 @@ client.on('interactionCreate', async (interaction) => {
         });
       }
 
-      if (existingVoteMessage) {
+      if (logMessage) {
         // Atualiza mensagem existente
-        await existingVoteMessage.edit({ embeds: [votesEmbed] });
+        await logMessage.edit({ embeds: [votesEmbed] });
       } else {
-        // Cria nova mensagem
-        await votesChannel.send({ embeds: [votesEmbed] });
+        // Cria nova mensagem e armazena o ID
+        const newLogMessage = await votesChannel.send({ embeds: [votesEmbed] });
+        logsMessages.set(message.id, newLogMessage.id);
       }
     }
   } catch (error) {
