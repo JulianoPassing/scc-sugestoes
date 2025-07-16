@@ -10,8 +10,8 @@ const client = new Client({
   partials: [Partials.Message, Partials.Channel, Partials.Reaction]
 });
 
-const SUGGESTION_CHANNEL_ID = '1395111676075966716';
-const VOTES_CHANNEL_ID = '1395115693598576683';
+const SUGGESTION_CHANNEL_ID = '1395117926402756669';
+const VOTES_CHANNEL_ID = '1395118049115246825';
 
 client.on('messageCreate', async (message) => {
   // Ignora mensagens do bot e fora do canal de sugestões
