@@ -46,12 +46,14 @@ client.on('messageCreate', async (message) => {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('vote_yes')
-      .setLabel('✔️ 0')
-      .setStyle(ButtonStyle.Success),
+      .setLabel('👍 Concordo (0)')
+      .setStyle(ButtonStyle.Success)
+      .setEmoji('✅'),
     new ButtonBuilder()
       .setCustomId('vote_no')
-      .setLabel('❌ 0')
+      .setLabel('👎 Discordo (0)')
       .setStyle(ButtonStyle.Danger)
+      .setEmoji('❌')
   );
 
   // Envia a sugestão formatada
@@ -83,8 +85,8 @@ client.on('interactionCreate', async (interaction) => {
 
   // Atualiza labels dos botões
   const row = ActionRowBuilder.from(message.components[0]);
-  row.components[0].setLabel(`✔️ ${voto.yes.size}`);
-  row.components[1].setLabel(`❌ ${voto.no.size}`);
+  row.components[0].setLabel(`👍 Concordo (${voto.yes.size})`);
+  row.components[1].setLabel(`👎 Discordo (${voto.no.size})`);
 
   await interaction.update({ components: [row] });
 });
