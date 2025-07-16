@@ -29,7 +29,7 @@ client.on('messageCreate', async (message) => {
       iconURL: message.author.displayAvatarURL({ dynamic: true, size: 64 })
     })
     .setTitle('💡 Sugestão')
-    .setDescription(`\`\`\`sugestão\n${conteudo}\n\`\`\``)
+    .setDescription(`\`\`\`\{conteudo}\n\`\`\``)
     .addFields(
       { name: '👤 Autor', value: `<@${message.author.id}>`, inline: true },
       { name: '📅 Data', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
