@@ -22,7 +22,7 @@ client.on('messageCreate', async (message) => {
   await message.delete();
 
   // Cria o embed da sugestão
-  const embed = new EmbedBuilder()
+  const embedSugestao = new EmbedBuilder()
     .setColor('#0099FF') // Cor azul para o padrão
     .setAuthor({
       name: `${message.author.username} - ${message.author.id}`,
@@ -30,14 +30,19 @@ client.on('messageCreate', async (message) => {
     })
     .setTitle('💡 Sugestão')
     .setDescription(`> ${conteudo}`)
-    .addFields(
-      { name: '👤 Autor', value: `<@${message.author.id}>`, inline: true },
-      { name: '📅 Data', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
-    )
     .setFooter({ 
       text: 'Sistema de Sugestões • SCC', 
       iconURL: message.guild.iconURL({ dynamic: true }) 
     })
+    .setTimestamp();
+
+  // Cria o embed das informações
+  const embedInfo = new EmbedBuilder()
+    .setColor('#0099FF')
+    .addFields(
+      { name: '👤 Autor', value: `<@${message.author.id}>`, inline: true },
+      { name: '📅 Data', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
+    )
     .setTimestamp();
 
   // Cria os botões de votação
@@ -55,7 +60,7 @@ client.on('messageCreate', async (message) => {
   );
 
   // Envia a sugestão formatada
-  await message.channel.send({ embeds: [embed], components: [row] });
+  await message.channel.send({ embeds: [embedSugestao, embedInfo], components: [row] });
 });
 
 // Lógica de votação
