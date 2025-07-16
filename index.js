@@ -23,15 +23,24 @@ client.on('messageCreate', async (message) => {
 
   // Cria o embed da sugestão
   const embed = new EmbedBuilder()
-    .setColor('#23272A')
+    .setColor('#FFD700') // Cor dourada para destacar
     .setAuthor({
       name: `${message.author.username} - ${message.author.id}`,
-      iconURL: message.author.displayAvatarURL()
+      iconURL: message.author.displayAvatarURL({ dynamic: true, size: 64 })
     })
-    .setTitle('Sugestão:')
-    .setDescription(conteudo)
-    .setFooter({ text: '(editado)' })
-    .setTimestamp();
+    .setTitle('💡 Sugestão')
+    .setDescription(`> ${conteudo}`)
+    .addFields(
+      { name: '📊 Status', value: 'Aguardando votação', inline: true },
+      { name: '👤 Autor', value: `<@${message.author.id}>`, inline: true },
+      { name: '📅 Data', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
+    )
+    .setFooter({ 
+      text: 'Sistema de Sugestões • SCC', 
+      iconURL: message.guild.iconURL({ dynamic: true }) 
+    })
+    .setTimestamp()
+    .setThumbnail(message.guild.iconURL({ dynamic: true, size: 128 }));
 
   // Cria os botões de votação
   const row = new ActionRowBuilder().addComponents(
