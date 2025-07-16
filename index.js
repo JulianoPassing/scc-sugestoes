@@ -17,45 +17,53 @@ client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
   if (message.channel.id !== SUGGESTION_CHANNEL_ID) return;
 
-  // Salva o conteúdo e deleta a mensagem original
-  const conteudo = message.content;
-  await message.delete();
+  try {
+    // Salva o conteúdo e deleta a mensagem original
+    const conteudo = message.content;
+    await message.delete();
 
-  // Cria o embed da sugestão
-  const embed = new EmbedBuilder()
-    .setColor('#0099FF') // Cor azul para o padrão
-    .setAuthor({
-      name: `${message.author.username} - ${message.author.id}`,
-      iconURL: message.author.displayAvatarURL({ dynamic: true, size: 64 })
-    })
-    .setTitle('💡 Sugestão')
-    .setDescription(`\`\`\`\n${conteudo}\n\`\`\``)
-    .addFields(
-      { name: '👤 Autor', value: `<@${message.author.id}>`, inline: true },
-      { name: '📅 Data', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
-    )
-    .setFooter({ 
-      text: 'Sistema de Sugestões • SCC', 
-      iconURL: message.guild.iconURL({ dynamic: true }) 
-    })
-    .setTimestamp();
+    // Cria o embed da sugestão
+    const embed = new EmbedBuilder()
+      .setColor('#0099FF') // Cor azul para o padrão
+      .setAuthor({
+        name: `${message.author.username} - ${message.author.id}`,
+        iconURL: message.author.displayAvatarURL({ dynamic: true, size: 64 })
+      })
+      .setTitle('💡 Sugestão')
+      .setDescription(`\`\`\`\n${conteudo}\n\`\`\``)
+      .addFields(
+        { name: '👤 Autor', value: `<@${message.author.id}>`, inline: true },
+        { name: '📅 Data', value: `<t:${Math.floor(Date.now() / 1000)}:F>`, inline: true }
+      )
+      .setFooter({ 
+        text: 'Sistema de Sugestões • SCC', 
+        iconURL: message.guild.iconURL({ dynamic: true }) 
+      })
+      .setTimestamp();
 
-  // Cria os botões de votação
-  const row = new ActionRowBuilder().addComponents(
-    new ButtonBuilder()
-      .setCustomId('vote_yes')
-      .setLabel('👍 (0) - 0%')
-      .setStyle(ButtonStyle.Success)
-      .setEmoji('✅'),
-    new ButtonBuilder()
-      .setCustomId('vote_no')
-      .setLabel('👎 (0) - 0%')
-      .setStyle(ButtonStyle.Danger)
-      .setEmoji('❌')
-  );
+    // Cria os botões de votação
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId('vote_yes')
+        .setLabel('👍 (0) - 0%')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('✅'),
+      new ButtonBuilder()
+        .setCustomId('vote_no')
+        .setLabel('👎 (0) - 0%')
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji('❌')
+    );
 
-  // Envia a sugestão formatada
-  await message.channel.send({ embeds: [embed], components: [row] });
+    // Envia a sugestão formatada (apenas uma vez)
+    const sentMessage = await message.channel.send({ embeds: [embed], components: [row] });
+    
+    // Inicializa o registro de votos para esta mensagem
+    votos.set(sentMessage.id, { yes: new Set(), no: new Set() });
+    
+  } catch (error) {
+    console.error('Erro ao processar sugestão:', error);
+  }
 });
 
 // Lógica de votação
